@@ -211,7 +211,7 @@ func getFinancialRatio() error {
 	rowArrs = rowArrs[1:]
 	_ = header
 
-	// Fill crawled web data back to for
+	// Fill crawled web data back to form
 	for _, row := range rowArrs {
 		if len(row) == 0 {
 			panic("something went wrong, row length is zero")
@@ -225,7 +225,15 @@ func getFinancialRatio() error {
 			// warning
 			fmt.Printf("key not found. Please check. %s.\n", key)
 		}
+	}
 
+	// Remove any unmatched metrics for readability
+	var nonEmptyForm FormData
+	for _, row := range form {
+		// only append those with values
+		if len(row.Numbers) > 0 {
+			nonEmptyForm = append(nonEmptyForm, row)
+		}
 	}
 
 	// Create form data with tr row
@@ -233,7 +241,7 @@ func getFinancialRatio() error {
 		newForm   FormData // Form with tr rows
 		prevGroup string   // prev group
 	)
-	for _, row := range form {
+	for _, row := range nonEmptyForm {
 		currentGroup := row.Group
 
 		if currentGroup == prevGroup {
