@@ -29,24 +29,24 @@ type FormData []RowData
 func getFormData() (FormData, map[string]int, error) {
 	jsonData := `
 [
-  {"Index":0 , "Group":"Profitability Analysis", "Title":"ROAA (%)"},
-  {"Index":1 , "Group":"Profitability Analysis", "Title":"ROAE (%)"},
-  {"Index":2 , "Group":"Profitability Analysis", "Title":"Return on Capital Employed (%)"},
+  {"Group":"Profitability Analysis", "Title":"ROAA (%)"},
+  {"Group":"Profitability Analysis", "Title":"ROAE (%)"},
+  {"Group":"Profitability Analysis", "Title":"Return on Capital Employed (%)"},
 
-  {"Index":3 , "Group":"Margin Analysis",        "Title":"Gross Profit Margin (%)"},
-  {"Index":4 , "Group":"Margin Analysis",        "Title":"EBITDA Margin (%)"},
-  {"Index":5 , "Group":"Margin Analysis",        "Title":"Pre-tax Profit Margin (%)"},
-  {"Index":6 , "Group":"Margin Analysis",        "Title":"Net Profit Margin (%)"},
+  {"Group":"Margin Analysis",        "Title":"Gross Profit Margin (%)"},
+  {"Group":"Margin Analysis",        "Title":"EBITDA Margin (%)"},
+  {"Group":"Margin Analysis",        "Title":"Pre-tax Profit Margin (%)"},
+  {"Group":"Margin Analysis",        "Title":"Net Profit Margin (%)"},
 
-  {"Index":7 , "Group":"Liquidity Analysis",     "Title":"Current Ratio (X)"},
-  {"Index":8 , "Group":"Liquidity Analysis",     "Title":"Quick Ratio (X)"},
+  {"Group":"Liquidity Analysis",     "Title":"Current Ratio (X)"},
+  {"Group":"Liquidity Analysis",     "Title":"Quick Ratio (X)"},
 
-  {"Index":9 , "Group":"Leverage Analysis",      "Title":"Total Liabilities / Total Assets(%)"},
-  {"Index":10, "Group":"Leverage Analysis",      "Title":"Total Liabilities / Shareholders' Funds (%)"},
-  {"Index":11, "Group":"Leverage Analysis",      "Title":"Non-current Liabilities / Shareholders' Funds (%)"},
-  {"Index":12, "Group":"Leverage Analysis",      "Title":"Interest Coverage Ratio (X)"},
+  {"Group":"Leverage Analysis",      "Title":"Total Liabilities / Total Assets(%)"},
+  {"Group":"Leverage Analysis",      "Title":"Total Liabilities / Shareholders' Funds (%)"},
+  {"Group":"Leverage Analysis",      "Title":"Non-current Liabilities / Shareholders' Funds (%)"},
+  {"Group":"Leverage Analysis",      "Title":"Interest Coverage Ratio (X)"},
 
-  {"Index":13, "Group":"Efficiency Analysis",    "Title":"Inventory Turnover on Sales (Day)"}
+  {"Group":"Efficiency Analysis",    "Title":"Inventory Turnover on Sales (Day)"}
 ]
 `
 
@@ -58,6 +58,11 @@ func getFormData() (FormData, map[string]int, error) {
 	err := json.Unmarshal([]byte(jsonData), &fd)
 	if err != nil {
 		return fd, m, err
+	}
+
+	// Assign index for ordering and look up
+	for i := 0; i < len(fd); i++ {
+		fd[i].Index = i
 	}
 
 	// build mapping
