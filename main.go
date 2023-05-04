@@ -162,7 +162,7 @@ func getFinancialRatio() error {
 	*/
 
 	// Financial position
-	url := "https://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=2163"
+	url := "https://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=5"
 	r, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -189,6 +189,7 @@ func getFinancialRatio() error {
 					if (tbID == 0) && (t == "") {
 						t = ""
 					}
+					t = strings.ReplaceAll(t, "  ", " ") // replace double spacing, with single
 					row = append(row, t)
 				})
 
