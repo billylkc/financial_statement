@@ -13,6 +13,16 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+func main() {
+
+	code := 11
+	err := getFinancialRatio(code)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+}
+
 type Number struct {
 	Int   int64
 	Float float64
@@ -153,26 +163,12 @@ func (fd *FormData) Render(header []string) string {
 	return res
 }
 
-func main() {
-
-	// err := dev()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	err := getFinancialRatio()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-}
-
 func dev() error {
 
 	return nil
 }
 
-func getFinancialRatio() error {
+func getFinancialRatio(code int) error {
 
 	// https://github.com/jedib0t/go-pretty
 
@@ -184,7 +180,7 @@ func getFinancialRatio() error {
 	*/
 
 	// Financial position
-	url := "https://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=5"
+	url := fmt.Sprintf("https://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=%d", code)
 	r, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -234,20 +230,24 @@ func getFinancialRatio() error {
 	_ = header
 
 	// Fill crawled web data back to form
+	var missing []string // For missing keys
 	for _, row := range rowArrs {
 		if len(row) == 0 {
 			panic("something went wrong, row length is zero")
 		}
 
-		key := row[0]
+		key := strings.TrimSpace(row[0])
 		val := row[1:]
 		if idx, ok := m[key]; ok {
 			form[idx].Numbers = parseNumbers(val)
 		} else {
 			// warning
-			fmt.Printf("key not found. Please check. %s.\n", key)
+
+			missing = append(missing, key)
+
 		}
 	}
+	fmt.Printf("key not found. Please check. %s.\n", strings.Join(missing, ", "))
 
 	// Remove any unmatched metrics for readability
 	var nonEmptyForm FormData
