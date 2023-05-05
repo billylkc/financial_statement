@@ -27,11 +27,19 @@ type RowData struct {
 type FormData []RowData
 
 func getFormData() (FormData, map[string]int, error) {
+	// {"Group":"", "Title":""},
 	jsonData := `
 [
   {"Group":"Profitability Analysis", "Title":"ROAA (%)"},
   {"Group":"Profitability Analysis", "Title":"ROAE (%)"},
   {"Group":"Profitability Analysis", "Title":"Return on Capital Employed (%)"},
+
+  {"Group":"Fundamental Indicators", "Title":"Net Interest Margin (%)"},
+  {"Group":"Fundamental Indicators", "Title":"Net Interest Spread (%)"},
+  {"Group":"Fundamental Indicators", "Title":"Capital Adequacy Ratio (%)"},
+  {"Group":"Fundamental Indicators", "Title":"Tier 1 Capital Ratio (%)"},
+  {"Group":"Fundamental Indicators", "Title":"Core Capital Ratio (%)"},
+  {"Group":"Fundamental Indicators", "Title":"Liquidity Ratio (%)"},
 
   {"Group":"Margin Analysis",        "Title":"Gross Profit Margin (%)"},
   {"Group":"Margin Analysis",        "Title":"EBITDA Margin (%)"},
@@ -40,6 +48,15 @@ func getFormData() (FormData, map[string]int, error) {
 
   {"Group":"Liquidity Analysis",     "Title":"Current Ratio (X)"},
   {"Group":"Liquidity Analysis",     "Title":"Quick Ratio (X)"},
+
+  {"Group":"Operating Performance Analysis", "Title":"Interest Expense / Interest Income (%)"},
+  {"Group":"Operating Performance Analysis", "Title":"Other Operating Income / Operating Income (%)"},
+  {"Group":"Operating Performance Analysis", "Title":"Operating Expense / Operating Income (%)"},
+
+  {"Group":"Loan & Depostis Analysis", "Title":"Liquidity / Customer Deposits (%)"},
+  {"Group":"Loan & Depostis Analysis", "Title":"Provision for Bad Debt / Customer Loans (%)"},
+  {"Group":"Loan & Depostis Analysis", "Title":"Loans / Deposits (%)"},
+  {"Group":"Loan & Depostis Analysis", "Title":"Customer Loans / Total Assets (%)"},
 
   {"Group":"Leverage Analysis",      "Title":"Total Liabilities / Total Assets(%)"},
   {"Group":"Leverage Analysis",      "Title":"Total Liabilities / Shareholders' Funds (%)"},
@@ -184,7 +201,7 @@ func getFinancialRatio() error {
 
 	var rowArrs [][]string
 	doc.Find(".figureTable").Each(func(tbID int, tablehtml *goquery.Selection) {
-		if tbID <= 5 {
+		if tbID <= 10 {
 			tablehtml.Find("tr").Each(func(trID int, rowhtml *goquery.Selection) {
 				var row []string
 				rowhtml.Find("td").Each(func(tdID int, tdhtml *goquery.Selection) {
