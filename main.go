@@ -1,4 +1,4 @@
-package main
+package financial_statement
 
 import (
 	"encoding/json"
@@ -13,14 +13,14 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func main() {
+func Blah() error {
 
 	code := 11
 	err := getFinancialRatio(code)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
-
+	return nil
 }
 
 type Number struct {
