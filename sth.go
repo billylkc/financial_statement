@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/billylkc/financial_statement/src"
 	"github.com/dustin/go-humanize"
 	"github.com/olekukonko/tablewriter"
 )
@@ -16,97 +17,11 @@ import (
 func Blah() error {
 
 	code := 11
-	err := getFinancialRatio(code)
+	err := src.GetFinancialRatio(code)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-type Number struct {
-	Int   int64
-	Float float64
-}
-
-type RowData struct {
-	Index   int      `json:"Index"`
-	Group   string   `json:"Group"` // Profitability Analysis
-	Title   string   `json:"Title"` // ROAA (%)
-	Numbers []Number `json:"Number"`
-}
-type FormData []RowData
-
-func getFormData() (FormData, map[string]int, error) {
-	// {"Group":"", "Title":""},
-	jsonData := `
-[
-  {"Group":"Profitability Analysis", "Title":"ROAA (%)"},
-  {"Group":"Profitability Analysis", "Title":"ROAE (%)"},
-  {"Group":"Profitability Analysis", "Title":"Return on Capital Employed (%)"},
-
-  {"Group":"Fundamental Indicators", "Title":"Net Interest Margin (%)"},
-  {"Group":"Fundamental Indicators", "Title":"Net Interest Spread (%)"},
-  {"Group":"Fundamental Indicators", "Title":"Capital Adequacy Ratio (%)"},
-  {"Group":"Fundamental Indicators", "Title":"Tier 1 Capital Ratio (%)"},
-  {"Group":"Fundamental Indicators", "Title":"Core Capital Ratio (%)"},
-  {"Group":"Fundamental Indicators", "Title":"Liquidity Ratio (%)"},
-
-  {"Group":"Margin Analysis",        "Title":"Gross Profit Margin (%)"},
-  {"Group":"Margin Analysis",        "Title":"EBITDA Margin (%)"},
-  {"Group":"Margin Analysis",        "Title":"Pre-tax Profit Margin (%)"},
-  {"Group":"Margin Analysis",        "Title":"Net Profit Margin (%)"},
-
-  {"Group":"Liquidity Analysis",     "Title":"Current Ratio (X)"},
-  {"Group":"Liquidity Analysis",     "Title":"Quick Ratio (X)"},
-
-  {"Group":"Operating Performance Analysis", "Title":"Interest Expense / Interest Income (%)"},
-  {"Group":"Operating Performance Analysis", "Title":"Other Operating Income / Operating Income (%)"},
-  {"Group":"Operating Performance Analysis", "Title":"Operating Expense / Operating Income (%)"},
-
-  {"Group":"Loan & Depostis Analysis", "Title":"Liquidity / Customer Deposits (%)"},
-  {"Group":"Loan & Depostis Analysis", "Title":"Provision for Bad Debt / Customer Loans (%)"},
-  {"Group":"Loan & Depostis Analysis", "Title":"Loans / Deposits (%)"},
-  {"Group":"Loan & Depostis Analysis", "Title":"Customer Loans / Total Assets (%)"},
-
-  {"Group":"Leverage Analysis",      "Title":"Total Liabilities / Total Assets(%)"},
-  {"Group":"Leverage Analysis",      "Title":"Total Liabilities / Shareholders' Funds (%)"},
-  {"Group":"Leverage Analysis",      "Title":"Non-current Liabilities / Shareholders' Funds (%)"},
-  {"Group":"Leverage Analysis",      "Title":"Interest Coverage Ratio (X)"},
-
-  {"Group":"Efficiency Analysis",    "Title":"Inventory Turnover on Sales (Day)"}
-]
-`
-
-	var (
-		fd FormData
-		m  map[string]int
-	)
-	// Parse json to form data
-	err := json.Unmarshal([]byte(jsonData), &fd)
-	if err != nil {
-		return fd, m, err
-	}
-
-	// Assign index for ordering and look up
-	for i := 0; i < len(fd); i++ {
-		fd[i].Index = i
-	}
-
-	// build mapping
-	m = make(map[string]int)
-	for _, v := range fd {
-		m[v.Title] = v.Index
-	}
-	return fd, m, nil
-
-}
-
-func generateEmptyArray(l int) []string {
-	var arr []string
-	for i := 0; i < l; i++ {
-		arr = append(arr, "")
-	}
-	return arr
 }
 
 func (rd RowData) ToReadableArray(nrecords int) []string {
