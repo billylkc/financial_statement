@@ -2,8 +2,10 @@ package src
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/billylkc/financial_statement/src/utils"
 	"github.com/dustin/go-humanize"
 	"github.com/olekukonko/tablewriter"
 )
@@ -26,12 +28,13 @@ type RowData struct {
 // Final tabular data scraped
 type FormData []RowData
 
+// ToReadableArray converts the Number struct to readable int or float
 func (rd RowData) ToReadableArray(nrecords int) []string {
 	var arr []string
 	arr = append(arr, rd.Title)
 
 	if len(rd.Numbers) == 0 { // Fill array up to nrecords
-		arr = append(arr, generateEmptyArray(nrecords-1)...)
+		arr = append(arr, utils.GenerateEmptyArray(nrecords-1)...)
 	}
 
 	for _, num := range rd.Numbers {
@@ -50,6 +53,7 @@ func (rd RowData) ToReadableArray(nrecords int) []string {
 	return arr
 }
 
+// Render renders the data and return printable org table
 func (fd *FormData) Render(header []string) string {
 	sb := &strings.Builder{}
 	table := tablewriter.NewWriter(sb)
@@ -78,4 +82,41 @@ func (fd *FormData) Render(header []string) string {
 	res = strings.ReplaceAll(res, "| ~", "|- ") // row separator
 
 	return res
+}
+
+func parseNumbers(ss []string) []Number {
+	var (
+		number []Number
+		num    Number
+	)
+	for _, s := range ss {
+		num = parseNumber(s)
+		number = append(number, num)
+	}
+	return number
+}
+
+func parseNumber(s string) Number {
+	n := Number{}
+	s = strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), ",", "")
+
+	// Handle null, na values
+	if s == "N/A" {
+		return n
+	}
+
+	// Handle negative values
+	if strings.Contains(s, "(") {
+		s = strings.ReplaceAll(s, "(", "")
+		s = strings.ReplaceAll(s, ")", "")
+		s = "-" + s // add negative sign
+
+	}
+
+	if i, err := strconv.Atoi(s); err == nil {
+		n.Int = int64(i)
+	} else if f, err := strconv.ParseFloat(s, 64); err == nil {
+		n.Float = f
+	}
+	return n
 }

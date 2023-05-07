@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 
-	fs "github.com/billylkc/financial_statement"
+	"github.com/billylkc/financial_statement/src/src"
 )
 
 func main() {
-	err := fs.Blah()
+	code := 316
+	err := src.GetFinancialRatio(code)
 	if err != nil {
 		fmt.Println(err)
 

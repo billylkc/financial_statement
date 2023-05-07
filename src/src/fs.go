@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -190,41 +189,4 @@ func getFormData() (FormData, map[string]int, error) {
 	}
 	return fd, m, nil
 
-}
-
-func parseNumbers(ss []string) []Number {
-	var (
-		number []Number
-		num    Number
-	)
-	for _, s := range ss {
-		num = parseNumber(s)
-		number = append(number, num)
-	}
-	return number
-}
-
-func parseNumber(s string) Number {
-	n := Number{}
-	s = strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), ",", "")
-
-	// Handle null, na values
-	if s == "N/A" {
-		return n
-	}
-
-	// Handle negative values
-	if strings.Contains(s, "(") {
-		s = strings.ReplaceAll(s, "(", "")
-		s = strings.ReplaceAll(s, ")", "")
-		s = "-" + s // add negative sign
-
-	}
-
-	if i, err := strconv.Atoi(s); err == nil {
-		n.Int = int64(i)
-	} else if f, err := strconv.ParseFloat(s, 64); err == nil {
-		n.Float = f
-	}
-	return n
 }

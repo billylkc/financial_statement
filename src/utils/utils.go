@@ -1,8 +1,11 @@
-package src
+package utils
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-func generateEmptyArray(l int) []string {
+// GenerateEmptyArray generates an empty array with length l to fill in some td in table/struct
+func GenerateEmptyArray(l int) []string {
 	var arr []string
 	for i := 0; i < l; i++ {
 		arr = append(arr, "")
