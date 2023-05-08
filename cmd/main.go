@@ -7,11 +7,18 @@ import (
 )
 
 func main() {
-	code := 316
-	err := src.GetFinancialRatio(code)
+
+	page := "financial_ratio" // financial_ration, income_statement
+	page = "income_statement"
+	page = "financial_position"
+
+	code := 11
+	table, err := src.GetFinancialData(page, code)
 	if err != nil {
 		fmt.Println(err)
 
 	}
+
+	fmt.Println(table)
 
 }

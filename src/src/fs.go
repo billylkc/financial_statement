@@ -14,10 +14,11 @@ import (
 // - Income Statement http://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_pl.php?code=316
 // - Financial Position http://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_bs.php?code=316
 // - Cash Flow Statement http://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_cashflow.php?code=316&quarter=latest
-func GetFinancialRatio(code int) error {
+func GetFinancialData(page string, code int) (string, error) {
 
-	// Financial position
-	url := fmt.Sprintf("https://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=%d", code)
+	var table string
+	url, jsonData := getPageData(page, code)
+
 	r, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -55,9 +56,9 @@ func GetFinancialRatio(code int) error {
 		}
 	})
 
-	form, m, err := getFormData()
+	form, m, err := getFormData(jsonData)
 	if err != nil {
-		return err
+		return table, err
 	}
 
 	// Handle table header (year)
@@ -67,6 +68,7 @@ func GetFinancialRatio(code int) error {
 	_ = header
 
 	// Fill crawled web data back to form
+	// TODO: handle others and subtotal rows
 	var missing []string // For missing keys
 	for _, row := range rowArrs {
 		if len(row) == 0 {
@@ -79,9 +81,7 @@ func GetFinancialRatio(code int) error {
 			form[idx].Numbers = parseNumbers(val)
 		} else {
 			// warning
-
 			missing = append(missing, key)
-
 		}
 	}
 	fmt.Printf("key not found. Please check. %s.\n", strings.Join(missing, ", "))
@@ -121,14 +121,127 @@ func GetFinancialRatio(code int) error {
 		}
 
 	}
-	res := newForm.Render(header)
-	fmt.Println(res)
-	return nil
+	table = newForm.Render(header)
+
+	return table, err
 }
 
-func getFormData() (FormData, map[string]int, error) {
-	// {"Group":"", "Title":""},
-	jsonData := `
+func getPageData(page string, code int) (string, string) {
+
+	var (
+		url      string
+		jsonData string
+	)
+
+	switch page {
+	case "financial_position":
+		url = fmt.Sprintf("http://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_bs.php?code=%d", code)
+		jsonData = `
+[
+  {"Group":"Assets", "Title": "Cash & Short-Term Funds"},
+  {"Group":"Assets", "Title": "Placings with Banks"},
+  {"Group":"Assets", "Title": "Gov't Cert. of Indebtedness"},
+  {"Group":"Assets", "Title": "Advances to Customers"},
+  {"Group":"Assets", "Title": "Financial Assets at FVTPL"},
+  {"Group":"Assets", "Title": "Financial Investments"},
+  {"Group":"Assets", "Title": "Derivative Financial Assets"},
+  {"Group":"Assets", "Title": "Interests in Asso. & JCEs"},
+  {"Group":"Assets", "Title": "Intangible Assets"},
+  {"Group":"Assets", "Title": "Investment Properties"},
+  {"Group":"Assets", "Title": "Property, plant, equip. & others"},
+  {"Group":"Assets", "Title": "Leasehold Land"},
+  {"Group":"Assets", "Title": "Other Assets"},
+
+  {"Group":"Current Assets", "Title": "Inventories"},
+  {"Group":"Current Assets", "Title": "Cash & Bank Balances"},
+  {"Group":"Current Assets", "Title": "Other Current Assets"},
+  {"Group":"Current Assets", "Title": "Assets Held for Sale"},
+
+  {"Group":"Non-current Assets", "Title": "Investment Properties"},
+  {"Group":"Non-current Assets", "Title": "Property, plant, equip. & others"},
+  {"Group":"Non-current Assets", "Title": "Leasehold Land"},
+  {"Group":"Non-current Assets", "Title": "Intangible Assets"},
+  {"Group":"Non-current Assets", "Title": "Interests in Asso. & JCEs"},
+  {"Group":"Non-current Assets", "Title": "Other Non-current Assets"},
+
+
+
+  {"Group":"Liabilities", "Title": "Currency Notes in Circulation"},
+  {"Group":"Liabilities", "Title": "Bank Deposits"},
+  {"Group":"Liabilities", "Title": "Customers Deposits"},
+  {"Group":"Liabilities", "Title": "CD & Other Debt Securities Issued"},
+  {"Group":"Liabilities", "Title": "Financial Liabilities at FVTPL"},
+  {"Group":"Liabilities", "Title": "Derivative Financial Liabilities"},
+  {"Group":"Liabilities", "Title": "Subordinated Liabilities"},
+  {"Group":"Liabilities", "Title": "Other Liabilities"},
+  {"Group":"Liabilities", "Title": ""},
+
+
+
+  {"Group":"Current Liabilities", "Title": "Other Current Liabilities"},
+  {"Group":"Current Liabilities", "Title": "Liab asso w/ Assets Held for Sale"},
+  {"Group":"Current Liabilities", "Title": "Net Current Assets"},
+  {"Group":"Current Liabilities", "Title": "Total Assets Less Current Liabilities"},
+
+  {"Group":"Capital and Reserves", "Title": "Share Capital"},
+  {"Group":"Capital and Reserves", "Title": "Reserves"},
+  {"Group":"Capital and Reserves", "Title": "Others"},
+  {"Group":"Capital and Reserves", "Title": "Shareholders' Funds"},
+  {"Group":"Capital and Reserves", "Title": "Non-controlling Interests"},
+  {"Group":"Capital and Reserves", "Title": "Others"},
+  {"Group":"Capital and Reserves", "Title": "Others"},
+
+  {"Group":"Commitments and Contingent Liabilities", "Title": "Commitments"},
+  {"Group":"Commitments and Contingent Liabilities", "Title": "Commitments and Contingent Liabilities"}
+
+]
+`
+
+	case "income_statement":
+		url = fmt.Sprintf("http://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_pl.php?code=%d", code)
+		jsonData = `
+[
+  {"Group":"Income Statement", "Title": "Interest Income"},
+  {"Group":"Income Statement", "Title": "Interest Expense"},
+  {"Group":"Income Statement", "Title": "Net Interest Income"},
+  {"Group":"Income Statement", "Title": "Other Operating Income"},
+  {"Group":"Income Statement", "Title": "Total Operating Income"},
+  {"Group":"Income Statement", "Title": "Net Insurance Claims Incurred & Movement in Policyholders' Liabilities"},
+  {"Group":"Income Statement", "Title": "Net Operating Income"},
+  {"Group":"Income Statement", "Title": "Operating Expenses"},
+  {"Group":"Income Statement", "Title": "Impairment Losses on Loans & Advances"},
+  {"Group":"Income Statement", "Title": "Other Impairment Losses"},
+  {"Group":"Income Statement", "Title": "Operating Profit"},
+
+  {"Group":"Income Statement", "Title": "Turnover"},
+  {"Group":"Income Statement", "Title": "Cost of Sales"},
+  {"Group":"Income Statement", "Title": "Gross Profit"},
+  {"Group":"Income Statement", "Title": "Change in FV & Impairment on Inv. Prop."},
+  {"Group":"Income Statement", "Title": "Change in FV & Impairment on Others"},
+  {"Group":"Income Statement", "Title": "Profit / (Loss) on Disposal"},
+  {"Group":"Income Statement", "Title": "Other Non-operating Items"},
+  {"Group":"Income Statement", "Title": "Share of Results of Asso. & JCEs"},
+  {"Group":"Income Statement", "Title": "Profit / (Loss) before Taxation"},
+  {"Group":"Income Statement", "Title": "Taxation"},
+  {"Group":"Income Statement", "Title": "Profit / (Loss) from Discontinued Operations"},
+  {"Group":"Income Statement", "Title": "Non-controlling Interests"},
+  {"Group":"Income Statement", "Title": "Others"},
+  {"Group":"Income Statement", "Title": "Profit / (Loss) Attributable to Shareholders"},
+  {"Group":"Income Statement", "Title": "Net Finance Costs / (Income)"},
+  {"Group":"Income Statement", "Title": "Depreciation & Amortisation"},
+  {"Group":"Income Statement", "Title": "Directors' Emoluments"},
+
+  {"Group":"Market Valuation Indicators", "Title": "EPS (cts)"},
+  {"Group":"Market Valuation Indicators", "Title": "DPS (cts)"},
+  {"Group":"Market Valuation Indicators", "Title": "Dividend Payout Ratio (%)"},
+  {"Group":"Market Valuation Indicators", "Title": "Cash flow per share ($)"},
+  {"Group":"Market Valuation Indicators", "Title": "NBV per share ($)"}
+]
+`
+
+	case "financial_ratio":
+		url = fmt.Sprintf("https://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=%d", code)
+		jsonData = `
 [
   {"Group":"Profitability Analysis", "Title":"ROAA (%)"},
   {"Group":"Profitability Analysis", "Title":"ROAE (%)"},
@@ -167,6 +280,15 @@ func getFormData() (FormData, map[string]int, error) {
 ]
 `
 
+	default:
+		fmt.Printf("Else")
+	}
+	return url, jsonData
+}
+
+func getFormData(jsonData string) (FormData, map[string]int, error) {
+	// {"Group":"", "Title":""},
+
 	var (
 		fd FormData
 		m  map[string]int
@@ -174,7 +296,7 @@ func getFormData() (FormData, map[string]int, error) {
 	// Parse json to form data
 	err := json.Unmarshal([]byte(jsonData), &fd)
 	if err != nil {
-		return fd, m, err
+		return fd, m, fmt.Errorf("Can not unmarshal json data. %w", err)
 	}
 
 	// Assign index for ordering and look up

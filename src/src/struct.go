@@ -74,14 +74,26 @@ func (fd *FormData) Render(header []string) string {
 	for _, v := range data {
 		table.Append(v)
 	}
+	var (
+		res    []string
+		result string
+	)
 	table.Render() // Send output
-	res := sb.String()
+	tableStr := sb.String()
 
 	// replace separator to fit org table style
-	res = strings.ReplaceAll(res, "-|-", "-+-") // middle separator
-	res = strings.ReplaceAll(res, "| ~", "|- ") // row separator
 
-	return res
+	for _, line := range strings.Split(tableStr, "\n") {
+		if strings.HasPrefix(line, "| ~") {
+			line = strings.ReplaceAll(line, "~", "-")
+			line = strings.ReplaceAll(line, " ", "-")
+		}
+
+		res = append(res, line)
+	}
+	result = strings.Join(res, "\n")
+	result = strings.ReplaceAll(result, "-|-", "-+-") // middle separator
+	return result
 }
 
 func parseNumbers(ss []string) []Number {
@@ -97,6 +109,8 @@ func parseNumbers(ss []string) []Number {
 }
 
 func parseNumber(s string) Number {
+	var isPercentage bool // Check for percentage sign
+
 	n := Number{}
 	s = strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), ",", "")
 
@@ -105,17 +119,25 @@ func parseNumber(s string) Number {
 		return n
 	}
 
+	// Handle percentage
+	if strings.Contains(s, "%") {
+		s = strings.ReplaceAll(s, "%", "")
+		isPercentage = true
+	}
+
 	// Handle negative values
 	if strings.Contains(s, "(") {
 		s = strings.ReplaceAll(s, "(", "")
 		s = strings.ReplaceAll(s, ")", "")
 		s = "-" + s // add negative sign
-
 	}
 
 	if i, err := strconv.Atoi(s); err == nil {
 		n.Int = int64(i)
 	} else if f, err := strconv.ParseFloat(s, 64); err == nil {
+		if isPercentage {
+			f = f / 100
+		}
 		n.Float = f
 	}
 	return n
