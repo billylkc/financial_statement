@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/billylkc/financial_statement/src/utils"
 )
 
 // - Financial Ratio http://www.etnet.com.hk/www/eng/stocks/realtime/quote_ci_ratio.php?code=316
@@ -69,7 +70,12 @@ func GetFinancialData(page string, code int) (string, error) {
 
 	// Fill crawled web data back to form
 	// TODO: handle others and subtotal rows
-	var missing []string // For missing keys
+	var (
+		missing   []string // For missing keys
+		prevIdx   int      // For subtitle
+		prevGroup string
+		subTitle  FormData
+	)
 	for _, row := range rowArrs {
 		if len(row) == 0 {
 			panic("something went wrong, row length is zero")
@@ -77,28 +83,59 @@ func GetFinancialData(page string, code int) (string, error) {
 
 		key := strings.TrimSpace(row[0])
 		val := row[1:]
+
 		if idx, ok := m[key]; ok {
-			form[idx].Numbers = parseNumbers(val)
+			obj := form[idx]
+			prevIdx = idx
+			prevGroup = obj.Group
+			obj.Numbers = parseNumbers(val)
 		} else {
 			// warning
+			prevIdx = idx
 			missing = append(missing, key)
 		}
+
+		if (key == "") && (len(val) > 0) { // Handle subtotal
+			row := RowData{
+				Index:   prevIdx,
+				Group:   prevGroup,
+				Title:   "",
+				Numbers: parseNumbers(val),
+			}
+			subTitle = append(subTitle, row)
+		}
+
 	}
 	fmt.Printf("key not found. Please check. %s.\n", strings.Join(missing, ", "))
+
+	// Create a mapping for subtitle
+	subTotalMap := make(map[int]RowData)
+	for _, r := range subTitle {
+		subTotalMap[r.Index] = r
+	}
+
+	fmt.Println(utils.PrettyPrint(subTotalMap))
 
 	// Remove any unmatched metrics for readability
 	var nonEmptyForm FormData
 	for _, row := range form {
+
 		// only append those with values
 		if len(row.Numbers) > 0 {
 			nonEmptyForm = append(nonEmptyForm, row)
 		}
+
+		// Handle subtotal
+		if val, ok := subTotalMap[row.Index]; ok {
+			nonEmptyForm = append(nonEmptyForm, val)
+		}
 	}
+
+	fmt.Println(utils.PrettyPrint(nonEmptyForm))
 
 	// Create form data with tr row
 	var (
-		newForm   FormData // Form with tr rows
-		prevGroup string   // prev group
+		newForm FormData // Form with tr rows
 	)
 	for _, row := range nonEmptyForm {
 		currentGroup := row.Group
