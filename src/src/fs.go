@@ -72,9 +72,9 @@ func GetFinancialData(page string, code int) (string, error) {
 	// TODO: handle others and subtotal rows
 	var (
 		missing   []string // For missing keys
-		prevIdx   int      // For subtitle
+		prevIdx   int      // For subtotal
 		prevGroup string
-		subTitle  FormData
+		subTotal  FormData
 	)
 	for _, row := range rowArrs {
 		if len(row) == 0 {
@@ -85,10 +85,9 @@ func GetFinancialData(page string, code int) (string, error) {
 		val := row[1:]
 
 		if idx, ok := m[key]; ok {
-			obj := form[idx]
 			prevIdx = idx
-			prevGroup = obj.Group
-			obj.Numbers = parseNumbers(val)
+			prevGroup = form[idx].Group
+			form[idx].Numbers = parseNumbers(val)
 		} else {
 			// warning
 			prevIdx = idx
@@ -102,15 +101,17 @@ func GetFinancialData(page string, code int) (string, error) {
 				Title:   "",
 				Numbers: parseNumbers(val),
 			}
-			subTitle = append(subTitle, row)
+			subTotal = append(subTotal, row)
+		} else {
+
 		}
 
 	}
 	fmt.Printf("key not found. Please check. %s.\n", strings.Join(missing, ", "))
 
-	// Create a mapping for subtitle
+	// Create a mapping for subtotal
 	subTotalMap := make(map[int]RowData)
-	for _, r := range subTitle {
+	for _, r := range subTotal {
 		subTotalMap[r.Index] = r
 	}
 
@@ -119,16 +120,19 @@ func GetFinancialData(page string, code int) (string, error) {
 	// Remove any unmatched metrics for readability
 	var nonEmptyForm FormData
 	for _, row := range form {
+		fmt.Println(row)
+
+		// Handle subtotal
+		lastIndex := row.Index - 1
+		if val, ok := subTotalMap[lastIndex]; ok {
+			nonEmptyForm = append(nonEmptyForm, val)
+		}
 
 		// only append those with values
 		if len(row.Numbers) > 0 {
 			nonEmptyForm = append(nonEmptyForm, row)
 		}
 
-		// Handle subtotal
-		if val, ok := subTotalMap[row.Index]; ok {
-			nonEmptyForm = append(nonEmptyForm, val)
-		}
 	}
 
 	fmt.Println(utils.PrettyPrint(nonEmptyForm))
